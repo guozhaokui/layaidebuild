@@ -1,6 +1,7 @@
 import * as ts from "typescript";
 import * as fs from 'fs';
 import * as path from 'path'
+import { transform } from "./transform";
 
 const formatHost: ts.FormatDiagnosticsHost = {
     getCanonicalFileName: path => path,
@@ -109,6 +110,24 @@ function watchMain() {
     host.afterProgramCreate = program => {
         console.log("** We finished making the program! **");
         //program.emit() 这里可以设置transformer
+        let oldemit = program.emit;
+        program.emit=(targetSourceFile?: ts.SourceFile, writeFile?: ts.WriteFileCallback, 
+            cancellationToken?: ts.CancellationToken, emitOnlyDtsFiles?: boolean, customTransformers?: ts.CustomTransformers)=>{
+                console.log('emit:', targetSourceFile);
+                return oldemit(
+                    targetSourceFile,
+                    writeFile,
+                    cancellationToken,
+                    emitOnlyDtsFiles,
+                    { 
+                        after: [ 
+                            transform(config) as ts.TransformerFactory<ts.SourceFile>
+                          ],
+                        afterDeclarations: [transform(config)]
+                    }
+                );
+        }
+        
         origPostProgramCreate!(program);
     };
 
