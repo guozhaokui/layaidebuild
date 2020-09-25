@@ -2,6 +2,24 @@ import * as ts from "typescript";
 import * as fs from 'fs';
 import * as path from 'path'
 import { transform } from "./transform";
+import { isShader,watchShader } from "./watchShader";
+
+
+class textfile{
+    srcpath:string;
+    outpath:string;
+    version=0;
+    /**
+     * 加上导出写到输出目录
+     */
+    emit(){
+
+    }
+    onchange(){
+        this.version++;
+        this.emit();
+    }
+}
 
 const formatHost: ts.FormatDiagnosticsHost = {
     getCanonicalFileName: path => path,
@@ -21,6 +39,11 @@ function reportDiagnostics(diagnostics: ts.Diagnostic[]): void {
     });
 }
 
+
+/**
+ * 读tsconfig.json配置文件
+ * @param configFileName 
+ */
 function readConfigFile(configFileName: string) { 
     // Read config file
     const configFileText = fs.readFileSync(configFileName).toString();  
@@ -43,10 +66,16 @@ function readConfigFile(configFileName: string) {
 }
 
 
-function watchMain() {
+
+/**
+ * watch 某个项目目录
+ * @param projpath 
+ */
+function watchMain(projpath:string) {
+    (!path.isAbsolute(projpath)) && (projpath = path.posix.join(process.cwd(),projpath));
     const configPath = ts.findConfigFile(
         // "../",   // 相对于当前脚本的位置
-        process.cwd(),
+        projpath ,
         ts.sys.fileExists,
         "tsconfig.json" 
     );
@@ -57,6 +86,9 @@ function watchMain() {
     let config = readConfigFile(configPath);
     //console.log('config',config)
     let baseurl = config.options.baseUrl;
+    let shaders:Object = {};
+
+    watchShader(projpath,shaders,config.options.outDir);
 
     // TypeScript can use several different program creation "strategies":
     //  * ts.createEmitAndSemanticDiagnosticsBuilderProgram,
@@ -78,10 +110,6 @@ function watchMain() {
     let oldwrite = sys.writeFile;
     sys.writeFile = (path: string, data: string, writeByteOrderMark?: boolean)=>{
         //console.log('path=',path)
-        //替换
-        if(baseurl){
-
-        }
         oldwrite(path,data,writeByteOrderMark);
     }
     // Note that there is another overload for `createWatchCompilerHost` that takes
@@ -113,6 +141,7 @@ function watchMain() {
         let oldemit = program.emit;
         program.emit=(targetSourceFile?: ts.SourceFile, writeFile?: ts.WriteFileCallback, 
             cancellationToken?: ts.CancellationToken, emitOnlyDtsFiles?: boolean, customTransformers?: ts.CustomTransformers)=>{
+                // 每个文件的输出。文件修改以后也都会调用到这里
                 console.log('emit:', targetSourceFile);
                 return oldemit(
                     targetSourceFile,
@@ -121,9 +150,9 @@ function watchMain() {
                     emitOnlyDtsFiles,
                     { 
                         after: [ 
-                            transform(config) as ts.TransformerFactory<ts.SourceFile>
+                            transform(config,shaders) as ts.TransformerFactory<ts.SourceFile>
                           ],
-                        afterDeclarations: [transform(config)]
+                        afterDeclarations: [transform(config,shaders)]
                     }
                 );
         }
@@ -136,6 +165,10 @@ function watchMain() {
     ts.createWatchProgram(host);
 }
 
+/**
+ * 报告错误
+ * @param diagnostic 
+ */
 function reportDiagnostic(diagnostic: ts.Diagnostic) {
     let { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
         diagnostic.start
@@ -154,4 +187,4 @@ function reportWatchStatusChanged(diagnostic: ts.Diagnostic) {
     console.info(ts.formatDiagnostic(diagnostic, formatHost));
 }
 
-watchMain();
+watchMain(process.argv[2]);

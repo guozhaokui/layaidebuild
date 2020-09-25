@@ -13,10 +13,7 @@
         "target": "es6"
     },
     "include": [
-        "typings/**/*.d.ts",
-        "src",
-        "bin",
-        "browser"
+        "src/watch"
     ],
     "exclude": [
         "dist",
