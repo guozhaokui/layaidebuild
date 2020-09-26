@@ -71,7 +71,7 @@ function readConfigFile(configFileName: string) {
  * watch 某个项目目录
  * @param projpath 
  */
-function watchMain(projpath:string) {
+export function watchMain(projpath:string) {
     (!path.isAbsolute(projpath)) && (projpath = path.posix.join(process.cwd(),projpath));
     const configPath = ts.findConfigFile(
         // "../",   // 相对于当前脚本的位置
@@ -187,4 +187,7 @@ function reportWatchStatusChanged(diagnostic: ts.Diagnostic) {
     console.info(ts.formatDiagnostic(diagnostic, formatHost));
 }
 
-watchMain(process.argv[2]);
+//test
+//watchMain(process.argv[2]);
+
+
