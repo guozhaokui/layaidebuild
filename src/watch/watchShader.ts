@@ -23,6 +23,7 @@ function isInPath( file:string, testpath:string){
 }
 
 //TODO 加上排除 node_modules的功能
+// 不能用依赖（shaders）来排除，会有时序问题
 export function watchShader(projpath:string,shaders:Object, outpath:string){
     chokidir.watch(projpath).on('all', (event, file) => {
         if(isShader( path.extname(file).toLowerCase()) && 
