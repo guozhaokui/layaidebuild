@@ -2,7 +2,8 @@ import * as ts from "typescript";
 import * as fs from 'fs';
 import * as path from 'path'
 import { transform } from "./transform";
-import { isShader,watchShader } from "./watchShader";
+import { buildpath, isShader,watchShader } from "./watchShader";
+import { watchTranspile } from "./watchTranspile";
 
 
 class textfile{
@@ -88,8 +89,16 @@ export function watchMain(projpath:string) {
     let baseurl = config.options.baseUrl;
     let shaders:Object = {};
 
-    watchShader(projpath,shaders,config.options.outDir);
+	if(!config.options.outDir){
+		console.error('必须设置outDir');
+		return;
+	}
 
+	// 先创建输出目录
+	buildpath(projpath,  path.relative(projpath, config.options.outDir));
+    watchShader(projpath,shaders,config.options.outDir);
+	watchTranspile(projpath,config.options.outDir);
+	return;
     // TypeScript can use several different program creation "strategies":
     //  * ts.createEmitAndSemanticDiagnosticsBuilderProgram,
     //  * ts.createSemanticDiagnosticsBuilderProgram

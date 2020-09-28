@@ -7,7 +7,7 @@ export function isShader(lowerext:string){
     return ['.vs','.ps','.fs','.glsl'].indexOf(lowerext)>=0;
 }
 
-function buildpath(projpath:string,relpath:string){
+export function buildpath(projpath:string,relpath:string){
     let pathes = relpath.split(/[\\/]/);
     let cpath = projpath;
     for(let i=0; i<pathes.length; i++){
