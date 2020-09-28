@@ -1,10 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.watchMain = void 0;
 const ts = require("typescript");
 const fs = require("fs");
 const path = require("path");
 const transform_1 = require("./transform");
 const watchShader_1 = require("./watchShader");
+const watchTranspile_1 = require("./watchTranspile");
 class textfile {
     constructor() {
         this.version = 0;
@@ -75,7 +77,15 @@ function watchMain(projpath) {
     //console.log('config',config)
     let baseurl = config.options.baseUrl;
     let shaders = {};
+    if (!config.options.outDir) {
+        console.error('必须设置outDir');
+        return;
+    }
+    // 先创建输出目录
+    watchShader_1.buildpath(projpath, path.relative(projpath, config.options.outDir));
     watchShader_1.watchShader(projpath, shaders, config.options.outDir);
+    watchTranspile_1.watchTranspile(projpath, config);
+    return;
     // TypeScript can use several different program creation "strategies":
     //  * ts.createEmitAndSemanticDiagnosticsBuilderProgram,
     //  * ts.createSemanticDiagnosticsBuilderProgram

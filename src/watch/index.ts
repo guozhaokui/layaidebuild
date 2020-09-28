@@ -97,7 +97,7 @@ export function watchMain(projpath:string) {
 	// 先创建输出目录
 	buildpath(projpath,  path.relative(projpath, config.options.outDir));
     watchShader(projpath,shaders,config.options.outDir);
-	watchTranspile(projpath,config.options.outDir);
+	watchTranspile(projpath,config);
 	return;
     // TypeScript can use several different program creation "strategies":
     //  * ts.createEmitAndSemanticDiagnosticsBuilderProgram,

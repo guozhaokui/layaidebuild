@@ -35,7 +35,8 @@ export function watchShader(projpath:string,shaders:Object, outpath:string){
                 // 创建目录
                 buildpath(outpath,path.dirname(relout));
 
-                let outfile = path.posix.join(outpath,relout);
+				// 注意现在都转成js，否则不是js文件import会失败
+                let outfile = path.posix.join(outpath,relout)+'.js';
                 fs.writeFileSync(outfile,shaderc);
             }
             console.log('更新文件('+event+'): ',file);

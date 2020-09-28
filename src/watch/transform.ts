@@ -20,7 +20,7 @@ export interface Opts {
  * Rewrite relative import to absolute import or trigger
  * rewrite callback
  *  把import的路径根据baseUrl整理一下，加上扩展名，记录需要的是shader文件
- * 
+ *  返回的路径必须是 .或者..开始
  * @param {string} importPath import path
  * @param {ts.SourceFile} sf Source file
  * @param shaders 当前监控的shader文件
@@ -28,8 +28,9 @@ export interface Opts {
  */
 function rewritePath(importPath: string, sf: ts.SourceFile, config:ts.ParsedCommandLine, shaders:Object) {
     let ret = importPath;
-    let ext = path.extname(importPath).toLowerCase();
-    if(!ext)
+	let ext = path.extname(importPath).toLowerCase();
+	// 凡是不是.js扩展名的，包括没有扩展名和各种shader等，都直接加上.js
+    if(ext!='.js')
         ret +='.js';
 
     if(path.isAbsolute(ret) || importPath.startsWith('.')){
@@ -42,14 +43,17 @@ function rewritePath(importPath: string, sf: ts.SourceFile, config:ts.ParsedComm
             }else{
                 ret = baseurl+'/'+ret;
             }
-            ret = path.posix.relative(path.dirname(sf.fileName),ret);
+			ret = path.posix.relative(path.dirname(sf.fileName),ret);
+			if(!ret.startsWith('.')){
+				ret = './'+ret;
+			}
         }
         //console.log(config.options.baseUrl, ret)
         //let out = ts.getOutputFileNames(config,sf.fileName,false);
     }
 
     // 记录shader
-    if(isShader(ext)){
+    if(isShader(ext) && shaders){
         let shaderfile = path.posix.join(path.dirname(sf.fileName),ret);
         let dict = shaders as {[key:string]:boolean};
         if(!dict[shaderfile]){
@@ -124,7 +128,8 @@ function importExportVisitor(
 
         // 当前节点是一个import， 例如importPath是 ../../ILaya
         if (importPath) {
-            //console.log('import', importPath)
+			//console.log('import', importPath)
+			// 应用baseUrl 转换成相对路径
             const rewrittenPath = rewritePath(importPath, sf, config,shaders)
             let ext = path.extname(rewrittenPath).toLowerCase();
             if(ext!=='.js'){

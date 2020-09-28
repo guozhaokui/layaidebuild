@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.transform = void 0;
 /**
  * AST Transformer to rewrite any ImportDeclaration paths.
  * This is typically used to rewrite relative imports into absolute imports
@@ -12,7 +13,7 @@ const watchShader_1 = require("./watchShader");
  * Rewrite relative import to absolute import or trigger
  * rewrite callback
  *  把import的路径根据baseUrl整理一下，加上扩展名，记录需要的是shader文件
- *
+ *  返回的路径必须是 .或者..开始
  * @param {string} importPath import path
  * @param {ts.SourceFile} sf Source file
  * @param shaders 当前监控的shader文件
@@ -21,7 +22,8 @@ const watchShader_1 = require("./watchShader");
 function rewritePath(importPath, sf, config, shaders) {
     let ret = importPath;
     let ext = path.extname(importPath).toLowerCase();
-    if (!ext)
+    // 凡是不是.js扩展名的，包括没有扩展名和各种shader等，都直接加上.js
+    if (ext != '.js')
         ret += '.js';
     if (path.isAbsolute(ret) || importPath.startsWith('.')) {
     }
@@ -35,12 +37,15 @@ function rewritePath(importPath, sf, config, shaders) {
                 ret = baseurl + '/' + ret;
             }
             ret = path.posix.relative(path.dirname(sf.fileName), ret);
+            if (!ret.startsWith('.')) {
+                ret = './' + ret;
+            }
         }
         //console.log(config.options.baseUrl, ret)
         //let out = ts.getOutputFileNames(config,sf.fileName,false);
     }
     // 记录shader
-    if (watchShader_1.isShader(ext)) {
+    if (watchShader_1.isShader(ext) && shaders) {
         let shaderfile = path.posix.join(path.dirname(sf.fileName), ret);
         let dict = shaders;
         if (!dict[shaderfile]) {
@@ -105,6 +110,7 @@ function importExportVisitor(ctx, sf, config, shaders) {
         // 当前节点是一个import， 例如importPath是 ../../ILaya
         if (importPath) {
             //console.log('import', importPath)
+            // 应用baseUrl 转换成相对路径
             const rewrittenPath = rewritePath(importPath, sf, config, shaders);
             let ext = path.extname(rewrittenPath).toLowerCase();
             if (ext !== '.js') {
