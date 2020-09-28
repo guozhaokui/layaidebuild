@@ -39,7 +39,7 @@ export function watchShader(projpath:string,shaders:Object, outpath:string){
                 let outfile = path.posix.join(outpath,relout)+'.js';
                 fs.writeFileSync(outfile,shaderc);
             }
-            console.log('更新文件('+event+'): ',file);
+            console.log('更新('+event+'): ',path.relative(projpath,file));
         }
     });
 }

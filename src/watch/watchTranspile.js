@@ -55,7 +55,7 @@ function watchTranspile(projpath, config) {
                 outfile = outfile.substr(0, outfile.length - 3) + '.js';
                 fs.writeFileSync(outfile, result.outputText);
             }
-            console.log('更新文件(' + event + '): ', file);
+            console.log('更新(' + event + '): ', path.relative(projpath, file));
         }
     });
 }
