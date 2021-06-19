@@ -31,6 +31,9 @@ function simpleTransformer<T extends ts.Node>(): ts.TransformerFactory<T> {
 export function watchTranspile(projpath:string, config: ts.ParsedCommandLine){
 	let importTransform = transform(config,null);
 	let outpath = config.options.outDir;
+	let option = {...config.options};
+	option.target<ts.ScriptTarget.ES2015 && (option.target = ts.ScriptTarget.ES2017);
+	option.module = ts.ModuleKind.ESNext;
     chokidir.watch(projpath).on('all', (event, file) => {
 		file = file.trimRight();
 		let ext = file.substr(file.length-5).toLowerCase();
@@ -47,10 +50,7 @@ export function watchTranspile(projpath:string, config: ts.ParsedCommandLine){
 				buildpath(outpath,path.dirname(relout));
 				
 				// 转换
-				let result = ts.transpileModule(tsStr,{ compilerOptions: { 
-					target: ts.ScriptTarget.ESNext,
-					module: ts.ModuleKind.ESNext 
-				},
+				let result = ts.transpileModule(tsStr,{ compilerOptions: option,
 				fileName:file,
 				moduleName:file,
 				renamedDependencies:{'engcls1':'engcls1kkk'},
