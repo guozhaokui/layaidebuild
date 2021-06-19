@@ -37,9 +37,12 @@ export function watchTranspile(projpath:string, config: ts.ParsedCommandLine){
 		// d.ts文件不会输出js，会导致transpile报错
 		if(ext==='.d.ts') return;
         if( ext.substr(2)==='.ts'&& !isInPath(file,outpath) ){
-            if(event==='add' || event==='change'){
-                let tsStr = fs.readFileSync(file).toString();
-                let relout = path.relative(projpath,file);// 不用posix是因为不认盘符
+			let tsStr = fs.readFileSync(file).toString();
+			let relout = path.relative(projpath,file);// 不用posix是因为不认盘符
+			let outfile = path.posix.join(outpath,relout);
+			outfile = outfile.substr(0,outfile.length-3)+'.js';
+
+			if(event==='add' || event==='change'){
 				// 创建目录
 				buildpath(outpath,path.dirname(relout));
 				
@@ -54,10 +57,11 @@ export function watchTranspile(projpath:string, config: ts.ParsedCommandLine){
 				transformers: { after:[importTransform]}
 				});
 
-				let outfile = path.posix.join(outpath,relout);
-				outfile = outfile.substr(0,outfile.length-3)+'.js';
                 fs.writeFileSync(outfile,result.outputText);
-            }
+				//fs.writeFile(outfile,result.outputText, err=>{});
+            }else if(event=='unlink'){
+				fs.unlinkSync(outfile);
+			}
             console.log('更新('+event+'): ',path.relative(projpath,file));
         }
     });

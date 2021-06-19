@@ -36,9 +36,11 @@ function watchTranspile(projpath, config) {
         if (ext === '.d.ts')
             return;
         if (ext.substr(2) === '.ts' && !isInPath(file, outpath)) {
+            let tsStr = fs.readFileSync(file).toString();
+            let relout = path.relative(projpath, file); // 不用posix是因为不认盘符
+            let outfile = path.posix.join(outpath, relout);
+            outfile = outfile.substr(0, outfile.length - 3) + '.js';
             if (event === 'add' || event === 'change') {
-                let tsStr = fs.readFileSync(file).toString();
-                let relout = path.relative(projpath, file); // 不用posix是因为不认盘符
                 // 创建目录
                 watchShader_1.buildpath(outpath, path.dirname(relout));
                 // 转换
@@ -51,9 +53,11 @@ function watchTranspile(projpath, config) {
                     renamedDependencies: { 'engcls1': 'engcls1kkk' },
                     transformers: { after: [importTransform] }
                 });
-                let outfile = path.posix.join(outpath, relout);
-                outfile = outfile.substr(0, outfile.length - 3) + '.js';
                 fs.writeFileSync(outfile, result.outputText);
+                //fs.writeFile(outfile,result.outputText, err=>{});
+            }
+            else if (event == 'unlink') {
+                fs.unlinkSync(outfile);
             }
             console.log('更新(' + event + '): ', path.relative(projpath, file));
         }
